@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
-import { rootStore } from './store/MetersStore';
 import { formatAddress, formatDate, getMeterLabel } from './utils/formatters';
 import { TableHeaderCell } from './components/TableHeaderCell';
 import { TableCell } from './components/TableCell';
@@ -8,23 +7,26 @@ import { Pagination } from './components/Pagination';
 import { HotWater } from '../public/svg/HotWater';
 import { ColdWater } from '../public/svg/ColdWater';
 import { Trash } from '../public/svg/Trash';
+import { rootStore } from './store/RootStore';
 
 export const App = observer(() => {
+  const { meters: metersStore, areas: areasStore } = rootStore;
+
   const {
     meters,
     isLoading,
     offset,
     currentPage,
     totalPages,
-    setPage,
+    error,
     loadMeters,
-    areasCache,
     deleteMeter,
-  } = rootStore;
+    setPage,
+  } = metersStore;
 
   useEffect(() => {
-    loadMeters();
-  }, [loadMeters]);
+    loadMeters(areasStore);
+  }, [loadMeters, areasStore]);
 
   if (isLoading && meters.length === 0) {
     return (
@@ -34,10 +36,10 @@ export const App = observer(() => {
     );
   }
 
-  if (rootStore.error && meters.length === 0) {
+  if (error && meters.length === 0) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white text-red-600">
-        {rootStore.error}
+        {error}
       </div>
     );
   }
@@ -92,7 +94,7 @@ export const App = observer(() => {
                 }`}
               >
                 {meters.map((meter, index) => {
-                  const cachedArea = areasCache.get(meter.area.id);
+                  const cachedArea = areasStore.items.get(meter.area.id);
 
                   return (
                     <tr
@@ -132,7 +134,7 @@ export const App = observer(() => {
                         {meter.description || '-'}
                         <button
                           type="button"
-                          onClick={() => deleteMeter(meter.id)}
+                          onClick={() => deleteMeter(meter.id, areasStore)}
                           className="flex size-10 p-3 items-center justify-center rounded-lg bg-[#fee3e3] text-[#c53030] opacity-0 transition-all duration-200 hover:bg-[#fed7d7] hover:text-[#9b2c2c] group-hover:opacity-100"
                           title="Удалить счётчик"
                         >
@@ -149,7 +151,7 @@ export const App = observer(() => {
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            onPageChange={setPage}
+            onPageChange={(page) => setPage(page, areasStore)}
             disabled={isLoading}
           />
         </div>
