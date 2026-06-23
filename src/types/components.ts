@@ -7,3 +7,10 @@ export type TableCellProps = {
   className?: string;
   title?: string;
 }
+
+export type PaginationProps = {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  disabled?: boolean;
+}
