@@ -84,7 +84,7 @@ body {
 }
 
 .custom-table-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #A0AEC0;
+  background-color: #a0aec0;
   border-radius: 9999px;
   border: 2px solid white;
   background-clip: padding-box;
@@ -96,5 +96,5 @@ body {
 
 .custom-table-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #A0AEC0 transparent;
+  scrollbar-color: #a0aec0 transparent;
 }

@@ -21,8 +21,8 @@ export const getMeterLabel = (typesArray: MeterType[] | undefined): string => {
 };
 
 export const formatAddress = (area: Instance<typeof AreaModel>): string => {
-  const baseAddress = area.house?.address || ''; 
+  const baseAddress = area.house?.address || '';
   const apartment = area.str_number_full ? `, ${area.str_number_full}` : '';
-  
+
   return `${baseAddress}${apartment}`.trim() || '—';
 };

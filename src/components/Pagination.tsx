@@ -53,9 +53,7 @@ export const Pagination = ({
             onClick={() => onPageChange(Number(page))}
             disabled={disabled}
             className={`size-8 flex items-center justify-center rounded-md border border-[#CED5DE] transition-colors duration-200 cursor-pointer disabled:cursor-not-allowed ${
-              isActive
-                ? 'bg-[#f2f5f8]'
-                : 'bg-white hover:bg-[#f7f8f9]'
+              isActive ? 'bg-[#f2f5f8]' : 'bg-white hover:bg-[#f7f8f9]'
             }`}
           >
             {page}
