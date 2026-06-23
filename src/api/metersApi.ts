@@ -8,18 +8,30 @@ const apiClient = axios.create({
 });
 
 export const metersApi = {
-  getMeters: async (limit: number = 20, offset: number = 0): Promise<PaginatedResponse<MeterDTO>> => {
-    const response = await apiClient.get<PaginatedResponse<MeterDTO>>('/meters/', {
-      params: { limit, offset },
-    });
+  getMeters: async (
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<PaginatedResponse<MeterDTO>> => {
+    const response = await apiClient.get<PaginatedResponse<MeterDTO>>(
+      '/meters/',
+      {
+        params: { limit, offset },
+      }
+    );
     return response.data;
   },
 
-  getAreas: async (areaIds: string[]): Promise<PaginatedResponse<AreaDTO>> => {
-    const params = new URLSearchParams();
-    areaIds.forEach((id) => params.append('id_in', id));
+  getAreas: async (ids: string[]): Promise<PaginatedResponse<AreaDTO>> => {
+    if (ids.length === 0) {
+      return { count: 0, next: null, previous: null, results: [] };
+    }
 
-    const response = await apiClient.get<PaginatedResponse<AreaDTO>>('/areas/', { params });
+    const params = new URLSearchParams();
+    ids.forEach((id) => params.append('id__in', id));
+    const response = await apiClient.get<PaginatedResponse<AreaDTO>>(
+      `/areas/?${params.toString()}`
+    );
+
     return response.data;
   },
 

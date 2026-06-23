@@ -12,11 +12,23 @@ export type MeterDTO = {
   };
 }
 
-export type AreaDTO = {
+export interface AreaDTO {
   id: string;
-  name: string;
-  house: string;
-  apartment: string;
+  number: number;
+  str_number: string;
+  str_number_full: string;
+  house: HouseDTO | null;
+}
+
+export type AreasResponse = {
+  count: number;
+  results: AreaDTO[];
+}
+
+export type HouseDTO = {
+  id: string;
+  address: string;
+  fias_addrobjs?: string[];
 }
 
 export type PaginatedResponse<T> = {

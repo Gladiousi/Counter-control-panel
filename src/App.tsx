@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { rootStore } from './store/MetersStore';
-import { formatDate, getMeterLabel } from './utils/formatters';
+import { formatAddress, formatDate, getMeterLabel } from './utils/formatters';
 import { TableHeaderCell } from './components/TableHeaderCell';
 import { TableCell } from './components/TableCell';
 import { Pagination } from './components/Pagination';
@@ -17,6 +17,7 @@ export const App = observer(() => {
     totalPages,
     setPage,
     loadMeters,
+    areasCache,
   } = rootStore;
 
   useEffect(() => {
@@ -63,30 +64,45 @@ export const App = observer(() => {
               <tbody
                 className={`divide-y divide-[#E0E5EB] text-sm ${isLoading ? 'opacity-60' : ''}`}
               >
-                {meters.map((meter, index) => (
-                  <tr
-                    key={meter.id}
-                    className="hover:bg-[#f7f8f9] transition-colors duration-300"
-                  >
-                    <TableCell>{offset + index + 1}</TableCell>
+                {meters.map((meter, index) => {
+                  const cachedArea = areasCache.get(meter.area.id);
 
-                    <TableCell className="flex items-center gap-2">
-                      {meter._type.includes('HotWaterAreaMeter') ? (
-                        <HotWater />
-                      ) : (
-                        <ColdWater />
-                      )}
-                      {getMeterLabel(meter._type)}
-                    </TableCell>
-                    <TableCell>{formatDate(meter.installation_date)}</TableCell>
-                    <TableCell>{meter.is_automatic ? 'Да' : 'Нет'}</TableCell>
-                    <TableCell>{meter.initial_values[0] ?? 0}</TableCell>
-                    <TableCell>
-                      -
-                    </TableCell>
-                    <TableCell>{meter.description || '-'}</TableCell>
-                  </tr>
-                ))}
+                  return (
+                    <tr
+                      key={meter.id}
+                      className="hover:bg-[#f7f8f9] transition-colors duration-300"
+                    >
+                      <TableCell>{offset + index + 1}</TableCell>
+
+                      <TableCell className="flex items-center gap-2">
+                        {meter._type.includes('HotWaterAreaMeter') ? (
+                          <HotWater />
+                        ) : (
+                          <ColdWater />
+                        )}
+                        {getMeterLabel(meter._type)}
+                      </TableCell>
+
+                      <TableCell>
+                        {formatDate(meter.installation_date)}
+                      </TableCell>
+                      <TableCell>{meter.is_automatic ? 'Да' : 'Нет'}</TableCell>
+                      <TableCell>{meter.initial_values[0] ?? 0}</TableCell>
+
+                      <TableCell className="text-black font-normal">
+                        {cachedArea ? (
+                          formatAddress(cachedArea)
+                        ) : (
+                          <span className="text-slate-400 italic text-xs animate-pulse">
+                            Загрузка адреса...
+                          </span>
+                        )}
+                      </TableCell>
+
+                      <TableCell>{meter.description || '-'}</TableCell>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

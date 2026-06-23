@@ -1,15 +1,11 @@
 import type { MeterType } from '../types/api';
+import { type Instance } from 'mobx-state-tree';
+import { type AreaModel } from '../store/MetersStore';
 
 export const formatDate = (dateString: string): string => {
-  if (!dateString) return '-';
   const date = new Date(dateString);
-  if (isNaN(date.getTime())) return dateString;
-
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-
-  return `${day}.${month}.${year}`;
+  if (isNaN(date.getTime())) return '—';
+  return date.toLocaleDateString('ru-RU');
 };
 
 export const getMeterLabel = (typesArray: MeterType[] | undefined): string => {
@@ -22,4 +18,11 @@ export const getMeterLabel = (typesArray: MeterType[] | undefined): string => {
   };
 
   return labels[mainType] || mainType;
+};
+
+export const formatAddress = (area: Instance<typeof AreaModel>): string => {
+  const baseAddress = area.house?.address || ''; 
+  const apartment = area.str_number_full ? `, ${area.str_number_full}` : '';
+  
+  return `${baseAddress}${apartment}`.trim() || '—';
 };

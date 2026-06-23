@@ -1,5 +1,19 @@
-import { types, flow, type Instance } from 'mobx-state-tree';
+import { types, flow, cast, type Instance } from 'mobx-state-tree';
 import { metersApi } from '../api/metersApi';
+import type { MeterDTO, AreaDTO, PaginatedResponse } from '../types/api';
+
+export const AreaModel = types.model('AreaModel', {
+  id: types.identifier,
+  number: types.number,
+  str_number: types.string,
+  str_number_full: types.string,
+  house: types.maybeNull(
+    types.model({
+      id: types.string,
+      address: types.string,
+    })
+  ),
+});
 
 export const MeterModel = types.model('MeterModel', {
   id: types.identifier,
@@ -16,6 +30,7 @@ export const MeterModel = types.model('MeterModel', {
 export const MetersStore = types
   .model('MetersStore', {
     meters: types.array(MeterModel),
+    areasCache: types.optional(types.map(AreaModel), {}),
     count: types.optional(types.number, 0),
     limit: types.optional(types.number, 20),
     offset: types.optional(types.number, 0),
@@ -37,14 +52,44 @@ export const MetersStore = types
     },
   }))
   .actions((self) => {
+    const loadAddresses = flow(function* (ids: string[]) {
+      try {
+        const data: PaginatedResponse<AreaDTO> = yield metersApi.getAreas(ids);
+        data.results.forEach((area) => {
+          self.areasCache.put({
+            id: area.id,
+            number: area.number,
+            str_number: area.str_number,
+            str_number_full: area.str_number_full,
+            house: area.house
+              ? { id: area.house.id, address: area.house.address }
+              : null,
+          });
+        });
+      } catch (err) {
+        console.error('Ошибка при загрузке адресов:', err);
+      }
+    });
+
     const loadMeters = flow(function* () {
       self.isLoading = true;
       self.error = null;
       try {
-        const data = yield metersApi.getMeters(self.limit, self.offset);
-        
-        self.meters = data.results;
+        const data: PaginatedResponse<MeterDTO> = yield metersApi.getMeters(
+          self.limit,
+          self.offset
+        );
+
+        self.meters = cast(data.results);
         self.count = data.count;
+
+        const areaIds = data.results.map((meter) => meter.area.id);
+        const uniqueIds = Array.from(new Set(areaIds));
+        const missingIds = uniqueIds.filter((id) => !self.areasCache.has(id));
+
+        if (missingIds.length > 0) {
+          yield loadAddresses(missingIds);
+        }
       } catch (err) {
         self.error = 'Не удалось загрузить данные счетчиков';
         console.error(err);
@@ -53,23 +98,9 @@ export const MetersStore = types
       }
     });
 
-    const nextPage = () => {
-      if (self.hasNextPage) {
-        self.offset += self.limit;
-        loadMeters();
-      }
-    };
-
-    const prevPage = () => {
-      if (self.hasPrevPage) {
-        self.offset = Math.max(0, self.offset - self.limit);
-        loadMeters();
-      }
-    };
-
     const setPage = (pageNumber: number) => {
       const targetOffset = (pageNumber - 1) * self.limit;
-      if (targetOffset >= 0 && targetOffset < self.count) {
+      if (targetOffset >= 0) {
         self.offset = targetOffset;
         loadMeters();
       }
@@ -77,12 +108,10 @@ export const MetersStore = types
 
     return {
       loadMeters,
-      nextPage,
-      prevPage,
+      loadAddresses,
       setPage,
     };
   });
 
-export type IMetersStore = Instance<typeof MetersStore>
-
+export type IMetersStore = Instance<typeof MetersStore>;
 export const rootStore = MetersStore.create();
