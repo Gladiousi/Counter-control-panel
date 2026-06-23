@@ -1,6 +1,6 @@
+import type { AreaModel } from '../store/Models/AreaModels';
 import type { MeterType } from '../types/api';
 import { type Instance } from 'mobx-state-tree';
-import { type AreaModel } from '../store/MetersStore';
 
 export const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
