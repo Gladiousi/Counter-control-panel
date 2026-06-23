@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/c300/api/:path*",
+      "destination": "http://showroom.eis24.me/c300/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
