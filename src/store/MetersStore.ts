@@ -98,6 +98,24 @@ export const MetersStore = types
       }
     });
 
+    const deleteMeter = flow(function* (meterId: string) {
+      self.isLoading = true;
+      self.error = null;
+      try {
+        yield metersApi.deleteMeter(meterId);
+
+        if (self.meters.length === 1 && self.offset > 0) {
+          self.offset = Math.max(0, self.offset - self.limit);
+        }
+
+        yield loadMeters();
+      } catch (err) {
+        self.error = 'Не удалось удалить счётчик';
+        console.error(err);
+        self.isLoading = false;
+      }
+    });
+
     const setPage = (pageNumber: number) => {
       const targetOffset = (pageNumber - 1) * self.limit;
       if (targetOffset >= 0) {
@@ -109,6 +127,7 @@ export const MetersStore = types
     return {
       loadMeters,
       loadAddresses,
+      deleteMeter,
       setPage,
     };
   });

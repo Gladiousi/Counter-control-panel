@@ -8,8 +8,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/c300': {
-        target: 'http://showroom.eis24.me',
+        target: 'https://showroom.eis24.me',
         changeOrigin: true,
+        secure: false,
       },
     },
   }

@@ -5,7 +5,7 @@ export const TableHeaderCell = ({
 }: TableHeaderCellProps) => {
   return (
     <th
-      className="sticky top-0 bg-slate-100 py-2 pl-3 z-10 text-xs font-medium text-[#697180] tracking-wider"
+      className="sticky top-0 bg-slate-100 py-2 px-3 z-10 text-[13px] font-medium text-[#697180]"
     >
       {children}
     </th>

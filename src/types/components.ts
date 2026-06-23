@@ -5,7 +5,6 @@ export type TableHeaderCellProps = {
 export type TableCellProps = {
   children: React.ReactNode;
   className?: string;
-  title?: string;
 }
 
 export type PaginationProps = {
