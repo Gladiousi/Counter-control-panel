@@ -5,16 +5,8 @@
       "destination": "http://showroom.eis24.me/c300/api/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!c300/api/).*)",
       "destination": "/index.html"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/c300/api/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" }
-      ]
     }
   ]
 }
