@@ -50,76 +50,96 @@ export const MetersStore = types
     get hasPrevPage() {
       return self.offset > 0;
     },
+    getMissingAreaIds(metersData: MeterDTO[]) {
+      const areaIds = metersData.map((meter) => meter.area.id);
+      const uniqueIds = Array.from(new Set(areaIds));
+      return uniqueIds.filter((id) => !self.areasCache.has(id));
+    }
   }))
   .actions((self) => {
+    const setLoading = (status: boolean) => {
+      self.isLoading = status;
+    };
+
+    const setError = (errorMessage: string | null) => {
+      self.error = errorMessage;
+    };
+
+    const setMetersData = (meters: MeterDTO[], totalCount: number) => {
+      self.meters = cast(meters);
+      self.count = totalCount;
+    };
+
+    const cacheAreas = (areas: AreaDTO[]) => {
+      areas.forEach((area) => {
+        self.areasCache.put({
+          id: area.id,
+          number: area.number,
+          str_number: area.str_number,
+          str_number_full: area.str_number_full,
+          house: area.house ? { id: area.house.id, address: area.house.address } : null,
+        });
+      });
+    };
+
+    const adjustOffsetForDeletion = () => {
+      if (self.meters.length === 1 && self.offset > 0) {
+        self.offset = Math.max(0, self.offset - self.limit);
+      }
+    };
+
+    const updateOffsetForPage = (pageNumber: number) => {
+      const targetOffset = (pageNumber - 1) * self.limit;
+      if (targetOffset >= 0) {
+        self.offset = targetOffset;
+        return true;
+      }
+      return false;
+    };
+
     const loadAddresses = flow(function* (ids: string[]) {
+      if (ids.length === 0) return;
       try {
         const data: PaginatedResponse<AreaDTO> = yield metersApi.getAreas(ids);
-        data.results.forEach((area) => {
-          self.areasCache.put({
-            id: area.id,
-            number: area.number,
-            str_number: area.str_number,
-            str_number_full: area.str_number_full,
-            house: area.house
-              ? { id: area.house.id, address: area.house.address }
-              : null,
-          });
-        });
+        cacheAreas(data.results);
       } catch (err) {
         console.error('Ошибка при загрузке адресов:', err);
       }
     });
 
     const loadMeters = flow(function* () {
-      self.isLoading = true;
-      self.error = null;
+      setLoading(true);
+      setError(null);
       try {
-        const data: PaginatedResponse<MeterDTO> = yield metersApi.getMeters(
-          self.limit,
-          self.offset
-        );
+        const data: PaginatedResponse<MeterDTO> = yield metersApi.getMeters(self.limit, self.offset);
+        setMetersData(data.results, data.count);
 
-        self.meters = cast(data.results);
-        self.count = data.count;
-
-        const areaIds = data.results.map((meter) => meter.area.id);
-        const uniqueIds = Array.from(new Set(areaIds));
-        const missingIds = uniqueIds.filter((id) => !self.areasCache.has(id));
-
-        if (missingIds.length > 0) {
-          yield loadAddresses(missingIds);
-        }
+        const missingIds = self.getMissingAreaIds(data.results);
+        yield loadAddresses(missingIds);
       } catch (err) {
-        self.error = 'Не удалось загрузить данные счетчиков';
+        setError('Не удалось загрузить данные счетчиков');
         console.error(err);
       } finally {
-        self.isLoading = false;
+        setLoading(false);
       }
     });
 
     const deleteMeter = flow(function* (meterId: string) {
-      self.isLoading = true;
-      self.error = null;
+      setLoading(true);
+      setError(null);
       try {
         yield metersApi.deleteMeter(meterId);
-
-        if (self.meters.length === 1 && self.offset > 0) {
-          self.offset = Math.max(0, self.offset - self.limit);
-        }
-
+        adjustOffsetForDeletion();
         yield loadMeters();
       } catch (err) {
-        self.error = 'Не удалось удалить счётчик';
+        setError('Не удалось удалить счётчик');
         console.error(err);
-        self.isLoading = false;
+        setLoading(false);
       }
     });
 
     const setPage = (pageNumber: number) => {
-      const targetOffset = (pageNumber - 1) * self.limit;
-      if (targetOffset >= 0) {
-        self.offset = targetOffset;
+      if (updateOffsetForPage(pageNumber)) {
         loadMeters();
       }
     };
